@@ -50,7 +50,9 @@ pub mod simple;
 #[cfg(feature = "pqc")]
 pub mod pqc;
 
-use error::{VaultError, VaultResult};
+#[cfg(feature = "pqc")]
+use error::VaultError;
+use error::VaultResult;
 
 /// Vault configuration options
 #[derive(Debug, Clone)]

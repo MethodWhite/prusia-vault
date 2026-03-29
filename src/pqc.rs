@@ -100,31 +100,48 @@ struct PqcKeyPair {
     salt: Vec<u8>,
 }
 
+/// Session key for PQC encryption
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionKey {
+    /// Unique session identifier
     pub session_id: String,
+    /// Encryption key material
     pub encryption_key: Vec<u8>,
+    /// MAC key for integrity verification
     pub mac_key: Vec<u8>,
+    /// Unix timestamp when key was created
     pub created_at: i64,
+    /// Unix timestamp of last key usage
     pub last_used: i64,
+    /// Number of times key has been rotated
     pub rotation_count: u32,
+    /// Optional expiration timestamp
     pub expires_at: Option<i64>,
 }
 
 impl SessionKey {
+    /// Check if the session key has expired
     pub fn is_expired(&self, now: i64) -> bool {
         self.expires_at.map(|e| now > e).unwrap_or(false)
     }
 }
 
+/// Vault entry for storing encrypted session keys
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VaultEntry {
+    /// Unique session identifier
     pub session_id: String,
+    /// Encrypted key material
     pub encrypted_key: Vec<u8>,
+    /// Fingerprint of the encryption key
     pub key_fingerprint: String,
+    /// Unix timestamp when entry was created
     pub created_at: i64,
+    /// Unix timestamp of last access
     pub last_used: i64,
+    /// Number of times key has been rotated
     pub rotation_count: u32,
+    /// Whether key is protected by TPM
     pub tpm_protected: bool,
 }
 
@@ -179,21 +196,34 @@ struct PqcEncryptedMasterKey {
 
 /// PQC vault with TPM support
 pub struct PqcVault {
+    /// In-memory cache of vault entries
     entries: Arc<RwLock<HashMap<String, VaultEntry>>>,
+    /// Master encryption key (in-memory only)
     master_key: Arc<RwLock<Option<MasterKey>>>,
+    /// PQC public key for encryption
     pq_public_key: Arc<RwLock<Option<Vec<u8>>>>,
+    /// PQC secret key for decryption
     pq_secret_key: Arc<RwLock<Option<Vec<u8>>>>,
+    /// Whether to use TPM for key protection
     use_tpm: bool,
+    /// Directory for vault data storage
     data_dir: PathBuf,
+    /// In-memory secrets cache
     secrets: Arc<RwLock<HashMap<String, Secret>>>,
 }
 
+/// Secret entry in the vault
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Secret {
+    /// Secret identifier
     key: String,
+    /// Encrypted secret value
     encrypted_value: Vec<u8>,
+    /// Nonce for encryption
     nonce: Vec<u8>,
+    /// Creation timestamp
     created_at: i64,
+    /// Additional metadata
     metadata: HashMap<String, String>,
 }
 
@@ -715,33 +745,9 @@ fn compute_hash(data: &[u8]) -> Vec<u8> {
     result
 }
 
-fn compute_hmac(key: &[u8], data: &[u8]) -> Vec<u8> {
-    let mut inner_pad = [0x36u8; 64];
-    let mut outer_pad = [0x5cu8; 64];
-
-    for i in 0..64.min(key.len()) {
-        inner_pad[i] ^= key[i];
-        outer_pad[i] ^= key[i];
-    }
-
-    let inner_data: Vec<u8> = inner_pad.iter().chain(data.iter()).cloned().collect();
-    let inner_hash = compute_hash(&inner_data);
-
-    let outer_data: Vec<u8> = outer_pad.iter().chain(inner_hash.iter()).cloned().collect();
-    compute_hash(&outer_data)
-}
-
-fn derive_mac_key(encryption_key: &[u8]) -> Vec<u8> {
-    let mut mac_key = vec![0u8; 32];
-    for (i, byte) in mac_key.iter_mut().enumerate() {
-        *byte = encryption_key[i % 32].wrapping_add(0x5a);
-    }
-    compute_hash(&mac_key)
-}
-
 fn generate_nonce(len: usize) -> Vec<u8> {
     let mut nonce = vec![0u8; len];
-    if let Err(e) = getrandom::getrandom(&mut nonce) {
+    if let Err(_e) = getrandom::getrandom(&mut nonce) {
         // Fallback to weak randomness if getrandom fails (should not happen)
         use std::time::{SystemTime, UNIX_EPOCH};
         let seed = SystemTime::now()
