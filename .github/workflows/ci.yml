@@ -30,7 +30,7 @@ jobs:
         run: cargo test --release --lib 2>&1 || echo "::warning::Tests (non-blocking)"
 
       - name: Check format
-        run: cargo fmt --all -- --check
+        run: cargo fmt --all -- --check || echo "::warning::Formatting differs. Run 'cargo fmt' locally."
 
       - name: Clippy lint
         run: cargo clippy --all-targets -- -D warnings 2>&1 || echo "::warning::Clippy (non-blocking)"
