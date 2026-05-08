@@ -274,7 +274,7 @@ impl PqcVault {
         if entries_path.exists() {
             let data = std::fs::read_to_string(&entries_path)?;
             if let Ok(entries) = serde_json::from_str::<HashMap<String, VaultEntry>>(&data) {
-                let mut e = self.entries.write().unwrap();
+                let mut e = self.entries.write().unwrap_or_else(|e| e.into_inner());
                 *e = entries;
             }
         }
@@ -283,7 +283,7 @@ impl PqcVault {
         if secrets_path.exists() {
             let data = std::fs::read_to_string(&secrets_path)?;
             if let Ok(secrets) = serde_json::from_str::<HashMap<String, Secret>>(&data) {
-                let mut s = self.secrets.write().unwrap();
+                let mut s = self.secrets.write().unwrap_or_else(|e| e.into_inner());
                 *s = secrets;
             }
         }
@@ -315,9 +315,9 @@ impl PqcVault {
                 VaultError::PqcError(format!("Failed to decrypt PQC secret key: {}", e))
             })?;
 
-            let mut pk = self.pq_public_key.write().unwrap();
+            let mut pk = self.pq_public_key.write().unwrap_or_else(|e| e.into_inner());
             *pk = Some(keypair.public_key);
-            let mut sk = self.pq_secret_key.write().unwrap();
+            let mut sk = self.pq_secret_key.write().unwrap_or_else(|e| e.into_inner());
             *sk = Some(decrypted_sk);
         } else {
             // Generate new PQC keypair
@@ -343,9 +343,9 @@ impl PqcVault {
             let data = serde_json::to_vec(&keypair)?;
             std::fs::write(&keypair_path, data)?;
 
-            let mut pk = self.pq_public_key.write().unwrap();
+            let mut pk = self.pq_public_key.write().unwrap_or_else(|e| e.into_inner());
             *pk = Some(keypair.public_key);
-            let mut sk = self.pq_secret_key.write().unwrap();
+            let mut sk = self.pq_secret_key.write().unwrap_or_else(|e| e.into_inner());
             *sk = Some(secret_key);
         }
 
@@ -362,7 +362,7 @@ impl PqcVault {
                 created_at: current_timestamp(),
                 key_id,
             };
-            let mut mk = self.master_key.write().unwrap();
+            let mut mk = self.master_key.write().unwrap_or_else(|e| e.into_inner());
             *mk = Some(master_key);
         } else if master_key_path.exists() {
             // Migration: plain master key exists, encrypt with PQC and store encrypted
@@ -374,7 +374,7 @@ impl PqcVault {
             // Optionally delete plain master key file
             let _ = std::fs::remove_file(&master_key_path);
             // Set master key in memory
-            let mut mk = self.master_key.write().unwrap();
+            let mut mk = self.master_key.write().unwrap_or_else(|e| e.into_inner());
             *mk = Some(master_key);
         } else {
             // Generate new master key and encrypt with PQC
@@ -383,7 +383,7 @@ impl PqcVault {
             let enc_data = serde_json::to_vec(&enc_master_key)?;
             std::fs::write(&encrypted_master_key_path, enc_data)?;
             // Set master key in memory
-            let mut mk = self.master_key.write().unwrap();
+            let mut mk = self.master_key.write().unwrap_or_else(|e| e.into_inner());
             *mk = Some(master_key);
         }
 
@@ -511,7 +511,7 @@ impl PqcVault {
             Some(e) => {
                 let key_data = self.decrypt_key(&e.encrypted_key)?;
                 // Update last used
-                let mut entries = self.entries.write().unwrap();
+                let mut entries = self.entries.write().unwrap_or_else(|e| e.into_inner());
                 if let Some(entry) = entries.get_mut(session_id) {
                     entry.last_used = current_timestamp();
                 }
@@ -537,7 +537,7 @@ impl PqcVault {
             return Err(VaultError::NotInitialized);
         }
 
-        let mut entries = self.entries.write().unwrap();
+        let mut entries = self.entries.write().unwrap_or_else(|e| e.into_inner());
         if let Some(entry) = entries.get_mut(session_id) {
             entry.rotation_count += 1;
             entry.last_used = current_timestamp();
@@ -625,7 +625,7 @@ impl PqcVault {
             return Err(VaultError::NotInitialized);
         }
 
-        if self.secrets.write().unwrap().remove(key).is_none() {
+        if self.secrets.write().unwrap_or_else(|e| e.into_inner()).remove(key).is_none() {
             return Err(VaultError::SecretNotFound(key.to_string()));
         }
 
@@ -634,11 +634,11 @@ impl PqcVault {
 
     /// Wipe all vault data
     pub fn wipe(&self) -> VaultResult<()> {
-        self.entries.write().unwrap().clear();
-        self.secrets.write().unwrap().clear();
-        *self.master_key.write().unwrap() = None;
-        *self.pq_public_key.write().unwrap() = None;
-        *self.pq_secret_key.write().unwrap() = None;
+        self.entries.write().unwrap_or_else(|e| e.into_inner()).clear();
+        self.secrets.write().unwrap_or_else(|e| e.into_inner()).clear();
+        *self.master_key.write().unwrap_or_else(|e| e.into_inner()) = None;
+        *self.pq_public_key.write().unwrap_or_else(|e| e.into_inner()) = None;
+        *self.pq_secret_key.write().unwrap_or_else(|e| e.into_inner()) = None;
 
         // Remove files
         let _ = std::fs::remove_file(self.data_dir.join("vault_entries.json"));

@@ -1,0 +1,33 @@
+#!/bin/bash
+# Prusia-Vault Installer
+# PROPRIETARY - All Rights Reserved
+
+set -e
+
+echo "╔══════════════════════════════════════════════════════════╗"
+echo "║  Prusia-Vault Installer                                  ║"
+echo "║  PROPRIETARY SOFTWARE - LICENSED, NOT SOLD               ║"
+echo "╚══════════════════════════════════════════════════════════╝"
+echo ""
+
+# Check Rust
+if ! command -v rustc &> /dev/null; then
+    echo "📦 Installing Rust..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source $HOME/.cargo/env
+fi
+
+# Build Prusia-Vault
+echo "📦 Building Prusia-Vault..."
+cd "$(dirname "$(realpath "$0" 2>/dev/null || echo "$0")")"
+cargo build --release
+
+echo ""
+echo "╔══════════════════════════════════════════════════════════╗"
+echo "║  Installation Complete ✅                                ║"
+echo "╚══════════════════════════════════════════════════════════╝"
+echo ""
+echo "Prusia-Vault is a library crate."
+echo "Add to Cargo.toml:"
+echo "  prusia-vault = { path = \"../prusia-vault\" }"
+echo ""

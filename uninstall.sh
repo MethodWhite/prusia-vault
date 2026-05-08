@@ -1,0 +1,23 @@
+#!/bin/bash
+# Prusia-Vault Uninstaller
+# PROPRIETARY - All Rights Reserved
+
+echo "╔══════════════════════════════════════════════════════════╗"
+echo "║  Prusia-Vault Uninstaller                                ║"
+echo "║  PROPRIETARY SOFTWARE - LICENSED, NOT SOLD               ║"
+echo "╚══════════════════════════════════════════════════════════╝"
+echo ""
+
+# Prusia-Vault is a library - no binaries to remove
+echo "ℹ️  Prusia-Vault is a library crate (no binaries installed)"
+echo ""
+echo "To remove from your project:"
+echo "  1. Remove from Cargo.toml:"
+echo "     prusia-vault = { path = \"../prusia-vault\" }"
+echo "  2. Run: cargo clean"
+echo ""
+
+echo "╔══════════════════════════════════════════════════════════╗"
+echo "║  Uninstall Complete ✅                                   ║"
+echo "╚══════════════════════════════════════════════════════════╝"
+echo ""
