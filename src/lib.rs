@@ -55,7 +55,7 @@ use error::VaultError;
 use error::VaultResult;
 
 /// Vault configuration options
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct VaultConfig {
     /// Data directory for vault storage
     pub data_dir: Option<std::path::PathBuf>,
@@ -63,16 +63,6 @@ pub struct VaultConfig {
     pub use_tpm: bool,
     /// Auto-rotate keys after this many seconds
     pub key_rotation_interval: Option<u64>,
-}
-
-impl Default for VaultConfig {
-    fn default() -> Self {
-        Self {
-            data_dir: None,
-            use_tpm: false,
-            key_rotation_interval: None,
-        }
-    }
 }
 
 /// Main vault interface that abstracts over different backends
