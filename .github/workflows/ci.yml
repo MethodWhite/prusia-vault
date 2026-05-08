@@ -27,13 +27,13 @@ jobs:
         run: cargo build --release
 
       - name: Test
-        run: cargo test --release --lib 2>&1 || echo "::warning::Tests (non-blocking)"
+        run: cargo test --release --lib
 
       - name: Check format
         run: cargo fmt --all -- --check
 
-      - name: Clippy lint
-        run: cargo clippy --all-targets -- -D warnings 2>&1 || echo "::warning::Clippy (non-blocking)"
+      - name: Clippy
+        run: cargo clippy --all-targets
 
   build:
     name: Build (${{ matrix.name }})
