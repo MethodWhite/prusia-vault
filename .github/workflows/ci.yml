@@ -18,7 +18,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@v1
         with:
-          toolchain: stable
+          toolchain: "1.94.0"
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
@@ -30,7 +30,7 @@ jobs:
         run: cargo test --release --lib 2>&1 || echo "::warning::Tests (non-blocking)"
 
       - name: Check format
-        run: cargo fmt --all -- --check || echo "::warning::Formatting differs. Run 'cargo fmt' locally."
+        run: cargo fmt --all -- --check
 
       - name: Clippy lint
         run: cargo clippy --all-targets -- -D warnings 2>&1 || echo "::warning::Clippy (non-blocking)"
@@ -64,7 +64,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@v1
         with:
-          toolchain: stable
+          toolchain: "1.94.0"
           targets: ${{ matrix.target }}
 
       - uses: Swatinem/rust-cache@v2
