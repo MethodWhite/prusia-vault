@@ -315,9 +315,15 @@ impl PqcVault {
                 VaultError::PqcError(format!("Failed to decrypt PQC secret key: {}", e))
             })?;
 
-            let mut pk = self.pq_public_key.write().unwrap_or_else(|e| e.into_inner());
+            let mut pk = self
+                .pq_public_key
+                .write()
+                .unwrap_or_else(|e| e.into_inner());
             *pk = Some(keypair.public_key);
-            let mut sk = self.pq_secret_key.write().unwrap_or_else(|e| e.into_inner());
+            let mut sk = self
+                .pq_secret_key
+                .write()
+                .unwrap_or_else(|e| e.into_inner());
             *sk = Some(decrypted_sk);
         } else {
             // Generate new PQC keypair
@@ -343,9 +349,15 @@ impl PqcVault {
             let data = serde_json::to_vec(&keypair)?;
             std::fs::write(&keypair_path, data)?;
 
-            let mut pk = self.pq_public_key.write().unwrap_or_else(|e| e.into_inner());
+            let mut pk = self
+                .pq_public_key
+                .write()
+                .unwrap_or_else(|e| e.into_inner());
             *pk = Some(keypair.public_key);
-            let mut sk = self.pq_secret_key.write().unwrap_or_else(|e| e.into_inner());
+            let mut sk = self
+                .pq_secret_key
+                .write()
+                .unwrap_or_else(|e| e.into_inner());
             *sk = Some(secret_key);
         }
 
@@ -625,7 +637,13 @@ impl PqcVault {
             return Err(VaultError::NotInitialized);
         }
 
-        if self.secrets.write().unwrap_or_else(|e| e.into_inner()).remove(key).is_none() {
+        if self
+            .secrets
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(key)
+            .is_none()
+        {
             return Err(VaultError::SecretNotFound(key.to_string()));
         }
 
@@ -634,11 +652,23 @@ impl PqcVault {
 
     /// Wipe all vault data
     pub fn wipe(&self) -> VaultResult<()> {
-        self.entries.write().unwrap_or_else(|e| e.into_inner()).clear();
-        self.secrets.write().unwrap_or_else(|e| e.into_inner()).clear();
+        self.entries
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
+        self.secrets
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
         *self.master_key.write().unwrap_or_else(|e| e.into_inner()) = None;
-        *self.pq_public_key.write().unwrap_or_else(|e| e.into_inner()) = None;
-        *self.pq_secret_key.write().unwrap_or_else(|e| e.into_inner()) = None;
+        *self
+            .pq_public_key
+            .write()
+            .unwrap_or_else(|e| e.into_inner()) = None;
+        *self
+            .pq_secret_key
+            .write()
+            .unwrap_or_else(|e| e.into_inner()) = None;
 
         // Remove files
         let _ = std::fs::remove_file(self.data_dir.join("vault_entries.json"));
